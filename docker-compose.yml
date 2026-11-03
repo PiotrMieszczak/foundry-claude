@@ -1,0 +1,19 @@
+# foundry-claude next to an existing Foundry container.
+# The server reaches Foundry over the shared network `foundry-net` at http://foundry:30000.
+# If Foundry runs elsewhere, drop `networks` and point FOUNDRY_URL at it.
+services:
+  foundry-claude:
+    build: .
+    image: foundry-claude
+    restart: always
+    env_file: .env
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./data:/data
+    networks:
+      - foundry-net
+
+networks:
+  foundry-net:
+    external: true
