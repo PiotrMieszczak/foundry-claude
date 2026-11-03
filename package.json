@@ -1,5 +1,5 @@
 {
-  "name": "foundry-claude",
+  "name": "foundry-mcp",
   "private": true,
   "workspaces": ["packages/*"],
   "scripts": {

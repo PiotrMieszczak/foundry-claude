@@ -1,4 +1,4 @@
-# foundry-claude
+# foundry-mcp
 
 An MCP server that lets AI assistants (Claude, Codex, Gemini CLI, Cursor and other MCP clients) read your [Foundry VTT](https://foundryvtt.com) v14 world: actors, scenes, journals and compendiums. Write tools are coming next; see the [implementation guide](docs/IMPLEMENTATION.md).
 
@@ -24,8 +24,8 @@ It runs as a small Node service next to Foundry. It logs in as a dedicated Found
 ## Run it
 
 ```bash
-git clone https://github.com/PiotrMieszczak/foundry-claude.git
-cd foundry-claude
+git clone https://github.com/PiotrMieszczak/foundry-mcp.git
+cd foundry-mcp
 cp .env.example .env
 ```
 
@@ -84,7 +84,7 @@ curl http://localhost:3000/healthz
 ```
 
 ```bash
-set -a; . ./.env; set +a; npm run smoke -w @foundry-claude/mcp-server
+set -a; . ./.env; set +a; npm run smoke -w @foundry-mcp/mcp-server
 ```
 
 The health check prints `ok`. The smoke test logs in to Foundry and prints how many actors, scenes and packs it found.

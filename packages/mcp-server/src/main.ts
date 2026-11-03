@@ -27,7 +27,7 @@ app.get("/healthz", (_req, res) => {
 let oauth: OwnerAuthProvider | undefined;
 if (ownerPassword) {
   oauth = new OwnerAuthProvider(ownerPassword, join(process.env.DATA_DIR ?? "data", "oauth.json"));
-  app.use(mcpAuthRouter({ provider: oauth, issuerUrl: publicUrl, resourceServerUrl: mcpUrl, resourceName: "foundry-claude" }));
+  app.use(mcpAuthRouter({ provider: oauth, issuerUrl: publicUrl, resourceServerUrl: mcpUrl, resourceName: "foundry-mcp" }));
   app.post("/login", express.urlencoded({ extended: false }), oauth.login);
 }
 
@@ -38,7 +38,7 @@ const auth = requireBearerAuth({
 
 // Stateless Streamable HTTP: a fresh MCP server per request, sharing one Foundry connection.
 app.post("/mcp", auth, express.json({ limit: "1mb" }), async (req, res) => {
-  const server = new McpServer({ name: "foundry-claude", version: "0.1.0" });
+  const server = new McpServer({ name: "foundry-mcp", version: "0.1.0" });
   registerWorldTools(server, foundry);
   const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
   res.on("close", () => {
@@ -52,4 +52,4 @@ app.all("/mcp", auth, (_req, res) => {
   res.status(405).set("Allow", "POST").send("Method not allowed");
 });
 
-app.listen(port, "::", () => console.log(`foundry-claude listening on [::]:${port}, MCP endpoint ${mcpUrl}`));
+app.listen(port, "::", () => console.log(`foundry-mcp listening on [::]:${port}, MCP endpoint ${mcpUrl}`));

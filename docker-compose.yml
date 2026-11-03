@@ -1,10 +1,10 @@
-# foundry-claude next to an existing Foundry container.
+# foundry-mcp next to an existing Foundry container.
 # The server reaches Foundry over the shared network `foundry-net` at http://foundry:30000.
 # If Foundry runs elsewhere, drop `networks` and point FOUNDRY_URL at it.
 services:
-  foundry-claude:
+  foundry-mcp:
     build: .
-    image: foundry-claude
+    image: foundry-mcp
     restart: always
     env_file: .env
     ports:

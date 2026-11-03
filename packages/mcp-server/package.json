@@ -1,5 +1,5 @@
 {
-  "name": "@foundry-claude/mcp-server",
+  "name": "@foundry-mcp/mcp-server",
   "private": true,
   "type": "module",
   "scripts": {

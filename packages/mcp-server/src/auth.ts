@@ -177,11 +177,11 @@ function loginPage(clientName: string, fields: Record<string, string | undefined
     .map(([k, v]) => `<input type="hidden" name="${escape(k)}" value="${escape(v ?? "")}">`)
     .join("");
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>foundry-claude sign-in</title><style>
+<title>foundry-mcp sign-in</title><style>
 body{font:16px/1.5 ui-monospace,Menlo,monospace;background:#0d1117;color:#e6e1d3;display:grid;place-items:center;min-height:100vh;margin:0}
 form{border:1px solid #d9a441;padding:24px;max-width:340px;width:calc(100% - 32px)}h1{font-size:18px;color:#d9a441;margin:0 0 8px}
 input[type=password],button{width:100%;box-sizing:border-box;padding:10px;margin-top:12px;font:inherit}button{background:#d9a441;border:0;color:#0d1117;cursor:pointer}
-.err{color:#ff8a80}</style></head><body><form method="post" action="/login"><h1>foundry-claude</h1>
+.err{color:#ff8a80}</style></head><body><form method="post" action="/login"><h1>foundry-mcp</h1>
 <p>${escape(clientName)} wants access to your Foundry world.</p>${error ? `<p class="err" role="alert">${escape(error)}</p>` : ""}
 <label for="pw">Owner password</label><input id="pw" type="password" name="password" autocomplete="current-password" required autofocus>
 ${inputs}<button type="submit">Allow</button></form></body></html>`;

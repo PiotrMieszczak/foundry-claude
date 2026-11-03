@@ -2,9 +2,9 @@ FROM node:22-alpine AS build
 WORKDIR /app
 COPY package.json package-lock.json ./
 COPY packages/mcp-server/package.json packages/mcp-server/
-RUN npm ci -w @foundry-claude/mcp-server --include-workspace-root
+RUN npm ci -w @foundry-mcp/mcp-server --include-workspace-root
 COPY packages/mcp-server packages/mcp-server
-RUN npm run build -w @foundry-claude/mcp-server && npm prune --omit=dev
+RUN npm run build -w @foundry-mcp/mcp-server && npm prune --omit=dev
 
 FROM node:22-alpine
 WORKDIR /app

@@ -1,10 +1,10 @@
 # Implementation guide
 
-This guide explains how foundry-claude is built and what comes next. Read it before you change the server.
+This guide explains how foundry-mcp is built and what comes next. Read it before you change the server.
 
 ## Goal
 
-foundry-claude lets AI clients such as Claude, Codex, Gemini CLI and Cursor read and write a Foundry VTT v14 world. On clients that support MCP Apps, tool results show up as styled widgets.
+foundry-mcp lets AI clients such as Claude, Codex, Gemini CLI and Cursor read and write a Foundry VTT v14 world. On clients that support MCP Apps, tool results show up as styled widgets.
 
 - **Target:** Foundry 14.x. Development uses the Mongoose Traveller 2e system (`mgt2e`), so system-specific features such as the NPC card and NPC templates start there.
 - **Out of scope:** music and asset hosting.
@@ -12,7 +12,7 @@ foundry-claude lets AI clients such as Claude, Codex, Gemini CLI and Cursor read
 ## Architecture
 
 ```
-AI client ──HTTPS (OAuth or bearer token)──> foundry-claude (Node, port 3000)
+AI client ──HTTPS (OAuth or bearer token)──> foundry-mcp (Node, port 3000)
                                                │ socket.io
                                                ▼
                                              Foundry VTT (a running world)
@@ -54,7 +54,7 @@ Use `@modelcontextprotocol/ext-apps` 1.7.x with SDK 1.x. Copy the pattern from C
    - Read `hostContext.theme` and apply `applyDocumentTheme`, `applyHostStyleVariables` and `applyHostFonts`.
    - Build the palette from host variables where they exist, so both light and dark modes stay readable. Use a transparent body and `<meta name="color-scheme" content="light dark">`.
 3. In the server, switch `get_actor`, `get_scene` and `get_journal` to `registerAppTool`:
-   - Set `_meta.ui.resourceUri` (`ui://foundry-claude/npc-card`, `ui://foundry-claude/scene-journal`).
+   - Set `_meta.ui.resourceUri` (`ui://foundry-mcp/npc-card`, `ui://foundry-mcp/scene-journal`).
    - Return `structuredContent` next to the text JSON.
    - Serve the built HTML with `registerAppResource` (MIME `RESOURCE_MIME_TYPE`), and copy the built files into the Docker image.
 4. Build the NPC card from a real actor. Fetch one with `get_actor` and map the actual `mgt2e` `system` fields rather than guessing the schema.
