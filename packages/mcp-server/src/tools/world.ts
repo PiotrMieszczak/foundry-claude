@@ -5,17 +5,19 @@ import { actorView, journalView, sceneView, summary } from "../foundry/views.js"
 
 const SEARCHABLE = ["Actor", "Item", "JournalEntry", "Scene", "RollTable", "Playlist"] as const;
 
-const json = (value: unknown) => ({ content: [{ type: "text" as const, text: JSON.stringify(value, null, 2) }] });
+export const json = (value: unknown) => ({ content: [{ type: "text" as const, text: JSON.stringify(value, null, 2) }] });
 
-const lookup = { id: z.string().optional().describe("Document id"), name: z.string().optional().describe("Exact document name") };
+export const lookup = { id: z.string().optional().describe("Document id"), name: z.string().optional().describe("Exact document name") };
+
+export async function findOne(foundry: FoundryClient, type: string, { id, name }: { id?: string; name?: string }) {
+  if (!id && !name) throw new Error("Give an id or a name");
+  const [doc] = await foundry.get(type, id ? { _id: id } : { name });
+  if (!doc) throw new Error(`${type} ${id ?? name} not found`);
+  return doc;
+}
 
 export function registerWorldTools(server: McpServer, foundry: FoundryClient) {
-  async function one(type: string, { id, name }: { id?: string; name?: string }) {
-    if (!id && !name) throw new Error("Give an id or a name");
-    const [doc] = await foundry.get(type, id ? { _id: id } : { name });
-    if (!doc) throw new Error(`${type} ${id ?? name} not found`);
-    return doc;
-  }
+  const one = (type: string, args: { id?: string; name?: string }) => findOne(foundry, type, args);
 
   server.registerTool(
     "search_world",

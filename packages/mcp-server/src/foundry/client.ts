@@ -28,6 +28,7 @@ export class FoundryClient {
   // v14 rejects a POST whose Origin differs from the host it was sent to.
   private readonly origin: string;
   private connecting?: Promise<Socket>;
+  private userId?: string;
 
   constructor(
     private readonly opts: FoundryOptions,
@@ -51,6 +52,12 @@ export class FoundryClient {
   /** The world payload Foundry sends its own client (users, packs, settings, ...). */
   world(): Promise<Doc> {
     return this.emit("world") as Promise<Doc>;
+  }
+
+  /** The id of the Foundry user this client logged in as. */
+  async user(): Promise<string> {
+    await this.ready();
+    return this.userId!;
   }
 
   close() {
@@ -106,6 +113,7 @@ export class FoundryClient {
       if (this.socket === socket) this.socket = undefined;
     });
     this.socket = socket;
+    this.userId = userId;
     return socket;
   }
 
