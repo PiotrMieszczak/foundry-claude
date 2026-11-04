@@ -37,7 +37,6 @@ Fill in `.env`:
 | `OWNER_PASSWORD` | Turns on OAuth. This is the password you type on the sign-in page when a client connects. Required for claude.ai and Claude Desktop. |
 | `API_TOKEN` | Turns on a static `Authorization: Bearer` token, for clients that can send headers |
 | `FOUNDRY_URL` | Foundry as seen from this server (for example `http://foundry:30000` on a shared Docker network) |
-| `FOUNDRY_ORIGIN` | Foundry's own public URL. Foundry rejects logins without it. |
 | `FOUNDRY_USER` / `FOUNDRY_PASSWORD` | The Foundry user the server logs in as |
 | `DATA_DIR` | Where OAuth registrations and hashed tokens are kept (`/data` in Docker) |
 

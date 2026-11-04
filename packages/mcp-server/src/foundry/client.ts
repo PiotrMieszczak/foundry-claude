@@ -9,8 +9,6 @@ import { io, type Socket } from "socket.io-client";
 export type FoundryOptions = {
   /** Where Foundry listens, e.g. http://foundry:30000 */
   url: string;
-  /** Foundry's public origin, e.g. https://foundry.example.com. v14 rejects POSTs without it. */
-  origin: string;
   user: string;
   password: string;
 };
@@ -27,12 +25,16 @@ export function sessionFromSetCookie(headers: string[]): string | undefined {
 
 export class FoundryClient {
   private socket?: Socket;
+  // v14 rejects a POST whose Origin differs from the host it was sent to.
+  private readonly origin: string;
   private connecting?: Promise<Socket>;
 
   constructor(
     private readonly opts: FoundryOptions,
     private readonly timeoutMs = 15_000,
-  ) {}
+  ) {
+    this.origin = new URL(opts.url).origin;
+  }
 
   /** Documents of one world collection, or of a compendium pack when `pack` is given. */
   async get(type: string, query: Record<string, unknown> = {}, pack?: string): Promise<Doc[]> {
@@ -72,25 +74,25 @@ export class FoundryClient {
     const status = (await (await fetch(new URL("/api/status", this.opts.url))).json()) as { active?: boolean };
     if (!status.active) throw new Error("No Foundry world is running; launch one first");
 
-    const join = await fetch(new URL("/join", this.opts.url), { headers: { Origin: this.opts.origin }, redirect: "manual" });
+    const join = await fetch(new URL("/join", this.opts.url), { headers: { Origin: this.origin }, redirect: "manual" });
     const session = sessionFromSetCookie(join.headers.getSetCookie()) ?? randomBytes(12).toString("hex");
 
     // Before login the socket is anonymous; it can still list users, as the join screen does.
     const anonymous = this.open(session);
-    let userid: string | undefined;
+    let userId: string | undefined;
     try {
       await this.bound(anonymous, false);
       const data = (await anonymous.timeout(this.timeoutMs).emitWithAck("getJoinData")) as { users?: Doc[] };
-      userid = data.users?.find((u) => u.name === this.opts.user)?._id;
+      userId = data.users?.find((u) => u.name === this.opts.user)?._id;
     } finally {
       anonymous.disconnect();
     }
-    if (!userid) throw new Error(`Foundry user "${this.opts.user}" not found in this world`);
+    if (!userId) throw new Error(`Foundry user "${this.opts.user}" not found in this world`);
 
     const res = await fetch(new URL("/join", this.opts.url), {
       method: "POST",
-      headers: { "Content-Type": "application/json", Cookie: `session=${session}`, Origin: this.opts.origin },
-      body: JSON.stringify({ userid, password: this.opts.password, action: "join" }),
+      headers: { "Content-Type": "application/json", Cookie: `session=${session}`, Origin: this.origin },
+      body: JSON.stringify({ userId, password: this.opts.password, action: "join" }),
       redirect: "manual",
     });
     const body = (await res.json().catch(() => ({}))) as { status?: string; error?: string; message?: string };
@@ -110,7 +112,7 @@ export class FoundryClient {
   private open(session: string): Socket {
     return io(this.opts.url, {
       transports: ["websocket"],
-      extraHeaders: { Cookie: `session=${session}`, Origin: this.opts.origin },
+      extraHeaders: { Cookie: `session=${session}`, Origin: this.origin },
       reconnection: false,
       timeout: this.timeoutMs,
     });

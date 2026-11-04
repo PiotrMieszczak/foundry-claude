@@ -27,7 +27,7 @@ AI client ──HTTPS (OAuth or bearer token)──> foundry-mcp (Node, port 300
 | Decision | Why |
 |---|---|
 | Headless socket client (`src/foundry/client.ts`) | Foundry has no server API. The server logs in like a browser: `GET /join`, then `POST /join`, then a socket.io connection that carries the `session` cookie. No browser tab has to stay open. In v14 the session travels only in the cookie on the WebSocket upgrade. Reference implementation: [thestranjer/foundry-vtt-mcp](https://github.com/thestranjer/foundry-vtt-mcp) (MIT). |
-| `Origin` header set to Foundry's public URL | Foundry v14 rejects `POST /join` without its own origin. |
+| `Origin` header set to the origin of `FOUNDRY_URL`, and `userId` in the `POST /join` body | Foundry v14 answers 400 when the Origin differs from the host the request reached, and 401 `ErrorUserDoesNotExist` for the older `userid` field. |
 | One shared Foundry connection | `FoundryClient` logs in lazily, and logs in again after a disconnect or a Foundry restart. |
 | Trimmed views (`src/foundry/views.ts`) | Raw documents are large (actors with full system data, journal pages in HTML), so tools return only what the model needs. |
 | Two auth modes (`src/auth.ts`) | **OAuth** (`OWNER_PASSWORD`): claude.ai and Claude Desktop connectors need OAuth with dynamic client registration. A one-person password page issues codes. Tokens are stored SHA-256 hashed in `DATA_DIR/oauth.json`. Access tokens last 1 hour; refresh tokens last 30 days and rotate on use. Five wrong passwords lock sign-in for 15 minutes. **Static token** (`API_TOKEN`): for clients that send headers (Claude Code, Codex, Gemini CLI, Cursor) and for local use without HTTPS. |
@@ -63,7 +63,7 @@ Use `@modelcontextprotocol/ext-apps` 1.7.x with SDK 1.x. Copy the pattern from C
    - Other systems fall back to a generic card: name, portrait, item list.
 5. The scene and journal widget shows the scene thumbnail (`thumb`, else `background`), name, size and token names. For a journal, it shows its pages as readable text and images.
 6. CSP:
-   - Images load only from hosts listed in `_meta.ui.csp.resourceDomains`. Read the allowed hosts from an env variable (`WIDGET_IMAGE_HOSTS`) that defaults to `FOUNDRY_ORIGIN`.
+   - Images load only from hosts listed in `_meta.ui.csp.resourceDomains`. Read the allowed hosts from an env variable (`WIDGET_IMAGE_HOSTS`) that lists Foundry's public host.
    - Keep tool results well under 150k characters, because larger ones break rendering.
 7. Test locally with `basic-host` from the ext-apps repo in light and dark mode, then in claude.ai. Clients without MCP Apps support show the text result.
 

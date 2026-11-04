@@ -8,7 +8,6 @@ export function env(key: string): string {
 
 export const foundryOptions = (): FoundryOptions => ({
   url: env("FOUNDRY_URL"),
-  origin: env("FOUNDRY_ORIGIN"),
   user: env("FOUNDRY_USER"),
   password: env("FOUNDRY_PASSWORD"),
 });
