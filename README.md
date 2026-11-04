@@ -1,6 +1,6 @@
 # foundry-mcp
 
-An MCP server that lets AI assistants (Claude, Codex, Gemini CLI, Cursor and other MCP clients) read your [Foundry VTT](https://foundryvtt.com) v14 world: actors, scenes, journals and compendiums. Write tools are coming next; see the [implementation guide](docs/IMPLEMENTATION.md).
+An MCP server that lets AI assistants (Claude, Codex, Gemini CLI, Cursor and other MCP clients) read and write your [Foundry VTT](https://foundryvtt.com) v14 world: actors, items, scenes, journals, chat and dice rolls. It can't delete anything.
 
 It runs as a small Node service next to Foundry. It logs in as a dedicated Foundry user, the same way a browser does, so no browser tab has to stay open.
 
@@ -13,6 +13,19 @@ It runs as a small Node service next to Foundry. It logs in as a dedicated Found
 | `get_scene` | One scene: background, size and tokens |
 | `get_journal` | One journal entry, with the plain text of its pages |
 | `list_compendium` | The world's compendium packs, or the documents in one pack |
+
+Write tools act as the server's Foundry user, so that user's role limits them:
+
+| Tool | What it does |
+|---|---|
+| `create_npc` | Creates a Mongoose Traveller 2e (`mgt2e`) NPC or traveller from a UPP, skills and gear names. Computes characteristic DMs and hits. |
+| `create_journal` | Creates a journal entry from Markdown pages |
+| `show_journal_to_players` | Gives players Observer permission on a journal entry and posts a chat link to it |
+| `set_active_scene` | Activates a scene, which moves every player to it |
+| `post_chat` | Posts a Markdown chat message, for everyone or whispered to GMs |
+| `roll` | Rolls dice on the server (Traveller: 2d6 + DM against a difficulty, with Effect) and posts the roll to chat |
+| `create_documents` | Creates any documents from raw data: items, scenes, roll tables, folders, macros, or embedded ones such as an item on an actor |
+| `update_documents` | Changes fields on documents, in dot notation (`"system.characteristics.STR.value": 9`) |
 
 ## Requirements
 
@@ -196,7 +209,7 @@ If your client and the server run on the same machine, skip HTTPS. Set `PUBLIC_U
 
 ## Security
 
-- Anyone holding a valid token acts as your Foundry user. Keep `OWNER_PASSWORD`, `API_TOKEN` and `.env` secret, use HTTPS, and give the Foundry user only the role it needs.
+- Anyone holding a valid token acts as your Foundry user. Keep `OWNER_PASSWORD`, `API_TOKEN` and `.env` secret, use HTTPS, and give the Foundry user only the role it needs. The write tools change your world for real, so back it up. A Player-role user can only write what that player owns.
 - OAuth sign-in locks for 15 minutes after five wrong passwords. Tokens are stored hashed.
 - Never put a token in a URL. Send it as a header.
 
@@ -210,7 +223,7 @@ npm ci
 npm test
 ```
 
-[docs/IMPLEMENTATION.md](docs/IMPLEMENTATION.md) covers the design, the Foundry protocol and the planned stages: widgets, then write tools.
+[docs/IMPLEMENTATION.md](docs/IMPLEMENTATION.md) covers the design, the Foundry protocol, the write tools and the planned widgets.
 
 ## Licence
 

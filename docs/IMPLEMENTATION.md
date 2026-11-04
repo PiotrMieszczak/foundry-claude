@@ -40,7 +40,7 @@ AI client ──HTTPS (OAuth or bearer token)──> foundry-mcp (Node, port 300
 |---|---|---|
 | 1 | Skeleton, Foundry client, read tools, auth, Docker | Done |
 | 2 | Widgets: NPC card, and a scene and journal preview | Next |
-| 3 | Write tools | Planned (below) |
+| 3 | Write tools | Done (v0.2.0) |
 
 ### Stage 2: widgets (MCP Apps)
 
@@ -69,34 +69,30 @@ Use `@modelcontextprotocol/ext-apps` 1.7.x with SDK 1.x. Copy the pattern from C
 
 ### Stage 3: write tools
 
-Writes run as the configured Foundry user, so that user's role caps what the server can do. Each tool validates its input with zod and returns the trimmed view of the created or updated document.
-
-**Generic tools.** These work for any system:
+Writes run as the configured Foundry user, so that user's role caps what the server can do. The tools are in `src/tools/write.ts`; each validates its input with zod. There is no delete tool on purpose.
 
 | Tool | Foundry call | Notes |
 |---|---|---|
-| `create_documents` | `modify(type, "create", { data, modifiedTime, render: true })` | `type` is one of Actor, Item, JournalEntry, Scene, RollTable, Macro or Playlist. Embedded documents (an item on an actor, a token on a scene) take `parentUuid`. |
-| `update_documents` | `modify(type, "update", { updates: [{ _id, ...changes }], diff: true, modifiedTime, render: true })` | Accepts partial changes in dot notation (`"system.characteristics.STR.value": 9`). |
-| `delete_documents` | `modify(type, "delete", { ids, modifiedTime, render: true })` | Requires `confirm: true`. The whole tool is off unless `ALLOW_DELETE=true`. |
+| `create_documents` | `modify(type, "create", { data, parentUuid? })` | World types plus embedded ones (`Item` on an actor, `Token` or `Note` on a scene, `JournalEntryPage`, `TableResult`, `PlaylistSound`). |
+| `update_documents` | `modify(type, "update", { updates, diff: true, parentUuid? })` | Dot-notation keys deep-merge. |
+| `create_npc` | one `create` with a complete `system`, then items with `parentUuid` | See below. |
+| `create_journal` | `create` with `pages` of type `text` (`format: 1`, HTML) | Markdown goes through `marked`. |
+| `show_journal_to_players` | `update` of `ownership.default` to 2, then a chat message with `@UUID[JournalEntry.id]{name}` | Foundry's own "show players" is a client-side broadcast this socket can't send. |
+| `set_active_scene` | one `update` that sets `active: false` on the current scene and `active: true` on the new one | Switching between two scenes isn't tested live yet, because it moves every connected player. |
+| `post_chat`, `roll` | `create` a ChatMessage | `author` (the logged-in user id) is required in v14. Whispers go to every user with role 3 or 4. |
 
-**Purpose-built tools.** These are easier for a model to use:
+What the live server taught us (Foundry 14.370, mgt2e 0.23):
 
-| Tool | What it does |
-|---|---|
-| `create_npc` | Builds an actor from a per-system template (`src/templates/mgt2e/npc.ts`, based on a real `mgt2e` NPC) from fields like name, UPP, skills and gear. |
-| `create_item` | Builds a weapon, armour or equipment item from a system template. |
-| `create_journal` | Takes Markdown, converts it to HTML pages, and creates the entry. |
-| `create_scene` | Takes a name, a background image path (one already uploaded to Foundry), a grid size and an optional token list. |
-| `create_roll_table` | Takes a name, a formula and rows `{ range, text }`. |
-| `set_active_scene` | Updates the scene with `{ active: true }`. |
-| `show_journal_to_players` | Raises `ownership.default` to OBSERVER (2) and posts a chat message that links the entry. Foundry's own "show players" is a client-side broadcast that this socket can't trigger. |
-| `post_chat` | Creates a ChatMessage with `content` and `speaker.alias`. |
-| `roll` | Evaluates dice on the server (for mgt2e: 2D6 + DM, with Effect = total − 8) and posts a ChatMessage with the serialized `rolls`. Foundry's client-side Roll and system dialogs don't run here. |
+- **A nested object you create replaces the defaults for that object.** Creating an actor with `system.characteristics.STR` alone stores only STR. Updates in dot notation deep-merge.
+- **mgt2e fills new actors from a GM browser.** Its `createActor` hook runs only in an open GM client and writes whole `characteristics` and `skills` objects for any that are missing, overwriting values set by a later update. So `create_npc` sends both complete in the create: the 16 characteristics from `MGT2.CHARACTERISTICS` (`src/foundry/mgt2e.ts`) and the skill list copied from an existing mgt2e character with every level reset to 0. With no GM online nothing fills them, so they must be complete either way.
+- **Derived values don't compute.** The sheet's code doesn't run for socket writes, so `create_npc` stores characteristic DMs and hits (STR + DEX + END) itself.
+- **Rolls.** `src/foundry/dice.ts` rolls with `crypto.randomInt` and serializes a `Roll` (`Die`, `OperatorTerm`, `NumericTerm` terms); Foundry's chat log renders it as a roll.
 
-Before you build on any write operation, confirm its exact shape against a live server using one throwaway document. Also check that values a system's sheet computes look right after a server-side write; system client code (derived data, hooks) doesn't run for socket writes. File uploads for scene backgrounds and portraits are a separate later step, using Foundry's `/upload` endpoint.
+Not built yet: file uploads for portraits and scene backgrounds (Foundry's `/upload` endpoint), and purpose-built `create_item`, `create_scene` and `create_roll_table` (use `create_documents`).
 
 ## Testing
 
 - `npm test` runs vitest on the pure parts: cookie parsing, the views, and auth (OAuth registration, wrong password, lockout, code reuse, refresh rotation, persistence, static token).
+- Before changing a write tool, check its shape against a live server on a throwaway document and delete it afterwards. The socket protocol is undocumented.
 - `npm run smoke` is a read-only live check against a running Foundry. It needs the `FOUNDRY_*` env. Run it after every Foundry update, because the socket protocol is undocumented.
 - To check a deployment from outside, run `curl -sI -X POST https://<your host>/mcp`. With OAuth on, it should return 401 with a `WWW-Authenticate` header that points at `/.well-known/oauth-protected-resource/mcp`.

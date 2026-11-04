@@ -8,6 +8,7 @@ import { OwnerAuthProvider, withStaticToken } from "./auth.js";
 import { foundryOptions } from "./config.js";
 import { FoundryClient } from "./foundry/client.js";
 import { registerWorldTools } from "./tools/world.js";
+import { registerWriteTools } from "./tools/write.js";
 
 const port = Number(process.env.PORT ?? 3000);
 const publicUrl = new URL(process.env.PUBLIC_URL ?? `http://localhost:${port}`);
@@ -38,8 +39,9 @@ const auth = requireBearerAuth({
 
 // Stateless Streamable HTTP: a fresh MCP server per request, sharing one Foundry connection.
 app.post("/mcp", auth, express.json({ limit: "1mb" }), async (req, res) => {
-  const server = new McpServer({ name: "foundry-mcp", version: "0.1.0" });
+  const server = new McpServer({ name: "foundry-mcp", version: "0.2.0" });
   registerWorldTools(server, foundry);
+  registerWriteTools(server, foundry);
   const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
   res.on("close", () => {
     void transport.close();
